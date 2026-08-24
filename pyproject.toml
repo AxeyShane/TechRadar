@@ -1,0 +1,32 @@
+[project]
+name = "techradar"
+version = "0.1.0"
+description = "Personal front-row feed for new technology -- scores tech news against your interests"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{name = "Akshay Kharvi"}]
+
+dependencies = [
+    "typer>=0.9.0",
+    "httpx>=0.24",
+    "feedparser>=6.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "flask>=3.0",
+    "crawl4ai>=0.9",
+    "youtube-transcript-api>=0.6",
+    "yt-dlp>=2024.1",
+]
+
+[project.scripts]
+techradar = "techradar.cli:app"
+
+[project.optional-dependencies]
+transcribe = ["faster-whisper>=1.0"]   # local video/audio -> transcript (GPU/CPU)
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/techradar"]

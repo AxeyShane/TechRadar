@@ -1,0 +1,20 @@
+# What "front row to new tech" means to you. Free text -- the LLM reads this
+# directly to score each item. Edit anytime; takes effect on the next fetch.
+
+profile: |
+  I want to hear about genuinely new tools, frameworks, and techniques as
+  they emerge -- not rehashed news or funding announcements. Highest
+  interest:
+
+  - AI agents, agentic coding tools, LLM tooling and infrastructure
+    (like Crawl4AI, LLM serving, RAG, orchestration frameworks)
+  - New open-source developer tools that meaningfully change a workflow
+  - Automation, robotics, mechatronics, computer vision applied to
+    manufacturing/production
+  - Practical AI applications (not pure research hype) with a working demo
+    or usable release
+
+  Low interest: funding rounds, corporate reorgs, opinion pieces, generic
+  "AI will change everything" commentary with no concrete new thing to try.
+
+min_score: 6   # only surface items scoring >= this out of 10

@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-07T00:00:00Z",
+  "title": "Design System: TechRadar",
+  "extensions": {
+    "colorMeta": {
+      "signal-blue": {
+        "role": "primary",
+        "displayName": "Signal Blue",
+        "canonical": "#3b5bfd",
+        "tonalRamp": ["#010D4C", "#01167E", "#021FB1", "#0228E3", "#1C41FD", "#4E6BFD", "#8196FD", "#CCD5FE"]
+      },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#16181d" },
+      "soft-graphite": { "role": "neutral", "displayName": "Soft Graphite", "canonical": "#6b6b66" },
+      "paper-white": { "role": "neutral", "displayName": "Paper White", "canonical": "#ffffff" },
+      "warm-fog": { "role": "neutral", "displayName": "Warm Fog", "canonical": "#f7f7f5" },
+      "hairline-gray": { "role": "neutral", "displayName": "Hairline Gray", "canonical": "#dcdcd6" },
+      "meadow-green": { "role": "success", "displayName": "Meadow Green", "canonical": "#1a7431" },
+      "meadow-green-bg": { "role": "success", "displayName": "Meadow Green (bg)", "canonical": "#e6f4ea" }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Title", "purpose": "The page heading, \"TechRadar.\" Appears once." },
+      "stat": { "displayName": "Stat", "purpose": "The fit-score readout per item." },
+      "body": { "displayName": "Body", "purpose": "Item titles and default text." },
+      "label": { "displayName": "Label", "purpose": "Button text." },
+      "meta": { "displayName": "Meta", "purpose": "Subtitle, stats line, source/date, scoring reason." }
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one call-to-action on the page: 'Fetch new items'.",
+      "html": "<button class=\"ds-btn-primary\">Fetch new items</button>",
+      "css": ".ds-btn-primary { background: #3b5bfd; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 10px; font-weight: 600; font-size: 0.85rem; font-family: -apple-system, system-ui, sans-serif; cursor: pointer; } .ds-btn-primary:disabled { opacity: 0.5; cursor: default; } .ds-btn-primary:hover:not(:disabled) { filter: brightness(1.08); } .ds-btn-primary:focus-visible { outline: 2px solid #3b5bfd; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Subordinate action -- dismiss/mark-seen on an item row.",
+      "html": "<button class=\"ds-btn-ghost\">Dismiss</button>",
+      "css": ".ds-btn-ghost { background: none; color: #6b6b66; border: 1px solid #dcdcd6; border-radius: 10px; padding: 0.25rem 0.6rem; font-size: 0.75rem; font-family: -apple-system, system-ui, sans-serif; cursor: pointer; } .ds-btn-ghost:hover { border-color: #6b6b66; color: #16181d; } .ds-btn-ghost:focus-visible { outline: 2px solid #3b5bfd; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card-item",
+      "description": "Flat surface shell: Warm Fog background, hairline border, no shadow.",
+      "html": "<div class=\"ds-card\">Card content</div>",
+      "css": ".ds-card { background: #f7f7f5; border: 1px solid #dcdcd6; border-radius: 10px; padding: 1rem 1.2rem; }"
+    },
+    {
+      "name": "Item Row",
+      "kind": "custom",
+      "refersTo": "card-item",
+      "description": "The page's core unit: title/link, fit-score readout, source/date meta, and the LLM's scoring reason, with a dismiss action. The reason line is a durable product commitment -- never hide it behind a hover or toggle.",
+      "html": "<div class=\"ds-item\">\n  <div class=\"ds-item-top\">\n    <div class=\"ds-item-title\"><a href=\"#\">Item title goes here</a></div>\n    <div class=\"ds-item-score\">8</div>\n  </div>\n  <div class=\"ds-item-meta\">Hacker News · 2026-08-06</div>\n  <div class=\"ds-item-reason\">Matches your interest in agentic coding tools.</div>\n  <button class=\"ds-btn-ghost\">Dismiss</button>\n</div>",
+      "css": ".ds-item { background: #f7f7f5; border: 1px solid #dcdcd6; border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 0.8rem; font-family: -apple-system, system-ui, sans-serif; } .ds-item.ds-item-seen { opacity: 0.45; } .ds-item-top { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; } .ds-item-title { font-weight: 600; } .ds-item-title a { color: inherit; text-decoration: none; } .ds-item-title a:hover { text-decoration: underline; } .ds-item-score { font-weight: 800; font-size: 1.1rem; color: #3b5bfd; flex-shrink: 0; } .ds-item-meta { color: #6b6b66; font-size: 0.78rem; margin-top: 0.3rem; } .ds-item-reason { font-size: 0.85rem; color: #6b6b66; margin-top: 0.4rem; font-style: italic; } .ds-btn-ghost { margin-top: 0.6rem; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Reading Room",
+    "overview": "A quiet personal study, not a dashboard. One page, skimmed in peace: flat neutral paper tones, generous breathing room, and exactly one signal color that appears only where a number needs to be read at a glance -- the fit score. Nothing competes with the content. No shadows, no chrome, no decoration standing between the reader and the list. The system exists to be opened, skimmed, and closed. It never tries to hold attention past that -- the whole product principle is signal over volume, and the room's calm is the visual expression of that.",
+    "keyCharacteristics": [
+      "Flat surfaces, zero elevation -- depth comes from a single hairline border and a faint tonal shift, never a shadow.",
+      "One accent color, used sparingly, reserved for the fit score and the one primary action.",
+      "Generous whitespace over density; a centered 900px reading column.",
+      "System font stack only -- no webfonts, no display face, nothing to load."
+    ],
+    "rules": [
+      { "name": "The One Signal Rule", "body": "Signal Blue appears in exactly two places: the fit-score number and the primary button. If a third element wants the accent, that's a sign it doesn't deserve one -- reach for Ink or Soft Graphite instead.", "section": "colors" },
+      { "name": "The Quiet Ink Rule", "body": "Everything defaults to Ink or Soft Graphite at normal weight. Weight and color are spent only on the two things worth noticing: the title and the score.", "section": "typography" },
+      { "name": "The No-Shadow Rule", "body": "Depth is tonal and bordered, never cast. If a future component needs to feel \"above\" the page, lighten its surface and add a hairline border before reaching for a shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep Signal Blue to the fit score and the primary action only (The One Signal Rule).",
+      "Do use the tonal-shift + hairline-border pattern for any new \"layer above the page\" need, instead of a shadow.",
+      "Do keep the reasoning line visible by default on every item.",
+      "Do reuse the single 10px radius for any new interactive surface."
+    ],
+    "donts": [
+      "Don't introduce a shadow anywhere; it breaks the flat-room character established in Elevation & Depth.",
+      "Don't add a second accent color -- if something new needs emphasis, it competes with the score for the room's one signal.",
+      "Don't repurpose Meadow Green for anything but an affirmative/success state without updating this file first.",
+      "Don't add a webfont or display typeface; the system-font stack is a deliberate zero-load choice, matching the local-first product principle."
+    ]
+  }
+}
