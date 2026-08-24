@@ -48,9 +48,27 @@ CREATE TABLE IF NOT EXISTS watched (
     watched_at TEXT NOT NULL,
     progress REAL DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS meta (
+    key TEXT PRIMARY KEY,
+    value TEXT
+);
 """
 
 _ITEM_COLUMNS = ("shared", "note")  # added to pre-existing DBs via migration
+
+
+def get_meta(conn: sqlite3.Connection, key: str, default: str = "") -> str:
+    """Read a key from the tiny meta table (last-visit, etc.)."""
+    row = conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+    return row[0] if row else default
+
+
+def set_meta(conn: sqlite3.Connection, key: str, value: str) -> None:
+    conn.execute(
+        "INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)",
+        (key, value),
+    )
 
 
 def get_connection() -> sqlite3.Connection:

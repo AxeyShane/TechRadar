@@ -4,6 +4,7 @@ import logging
 import os
 import sqlite3
 import threading
+from datetime import datetime, timezone
 
 from flask import Flask, jsonify, request
 
@@ -192,6 +193,10 @@ PAGE = """<!doctype html><html><head><meta charset="utf-8">
   .dismiss { display: inline-block; background: none; color: var(--text-muted); border: 1px solid var(--border);
     padding: 0.4rem 0.75rem; font-size: var(--text-sm); margin-top: 0.6rem; }
   details.seen-section { margin-top: 1rem; }
+  .feed-group { margin-top: 0.6rem; }
+  .feed-group + .feed-group { margin-top: 1rem; }
+  .group-label { color: var(--text-muted); font-size: var(--text-sm); font-weight: 600;
+    margin: 0 0 0.4rem; }
   details.seen-section summary { cursor: pointer; color: var(--text-muted); font-size: var(--text-sm);
     font-weight: 600; padding: 0.4rem 0; }
   .share-box { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1rem;
@@ -310,19 +315,27 @@ function itemHtml(it) {
 async function load() {
   const r = await fetch('/api/items');
   const data = await r.json();
-  const unseen = data.items.filter(it => !it.seen);
-  const seen = data.items.filter(it => it.seen);
+  const items = data.items;
+  const newItems = items.filter(it => it.is_new && !it.seen);
+  const oldItems = items.filter(it => !it.seen && !it.is_new);
+  const seen = items.filter(it => it.seen);
   const el = document.getElementById('items');
-  el.innerHTML = unseen.map(itemHtml).join('') + (seen.length ? `
+  const group = (label, list) => '<section class="feed-group"><h3 class="group-label">' + label +
+    '</h3>' + list.map(itemHtml).join('') + '</section>';
+  el.innerHTML =
+    (newItems.length ? group('New since you last looked', newItems) : '') +
+    (oldItems.length ? group('Earlier', oldItems) : '') +
+    (seen.length ? `
     <details class="seen-section">
       <summary>Dismissed (${seen.length})</summary>
       ${seen.map(itemHtml).join('')}
     </details>
   ` : '');
+  const surfaced = items.length;
   const s = await fetch('/api/stats');
   const stats = await s.json();
   document.getElementById('stats').textContent =
-    `${stats.total} tracked · ${stats.scored} scored · ${stats.surfaced} surfaced`;
+    `${stats.total} tracked · ${stats.scored} scored · ${surfaced} surfaced`;
 }
 
 async function markSeen(id) {
@@ -369,20 +382,57 @@ def create_app() -> Flask:
 
     @app.route("/")
     def index():
+        # Record "since last visit": stamp now every time the dashboard opens.
+        conn = database.get_connection()
+        database.set_meta(conn, "last_visit", datetime.now(timezone.utc).isoformat())
+        conn.commit()
+        conn.close()
         return PAGE
 
     @app.route("/api/items")
     def api_items():
-        min_score = int(request.args.get("min_score", load_interests().get("min_score", 6)))
+        from techradar.ranking import rank_feed
+        from techradar.config import load_sources
+
+        interests = load_interests()
+        sources = load_sources()
+        ranking_cfg = sources.get("ranking", {})
+        min_score = int(request.args.get("min_score", interests.get("min_score", 6)))
+        limit = int(request.args.get("limit", ranking_cfg.get("limit", 200)))
+        source_cap = int(request.args.get("cap", ranking_cfg.get("per_source_cap", 5)))
+        half_life_days = float(ranking_cfg.get("half_life_days", 14))
+        now_iso = datetime.now(timezone.utc).isoformat()
+
         conn = database.get_connection()
         conn.row_factory = sqlite3.Row
         rows = conn.execute(
-            "SELECT rowid AS id, * FROM items WHERE fit_score >= ? "
-            "ORDER BY fit_score DESC, discovered_at DESC LIMIT 200",
-            (min_score,),
+            "SELECT rowid AS id, * FROM items "
+            "ORDER BY discovered_at DESC LIMIT 20000",
         ).fetchall()
+        last_visit = database.get_meta(conn, "last_visit", "")
         conn.close()
-        return jsonify({"items": [dict(r) for r in rows]})
+
+        items = [dict(r) for r in rows]
+        ranked = rank_feed(items, min_score=min_score, limit=limit,
+                           source_cap=source_cap, half_life_days=half_life_days)
+        # Flag items discovered since the last page view so the front row
+        # leads with what's genuinely new (the "since last visit" grouping).
+        last_ts = None
+        if last_visit:
+            try:
+                last_ts = datetime.fromisoformat(last_visit.replace("Z", "+00:00")).timestamp()
+            except ValueError:
+                last_ts = None
+        for it in ranked:
+            it["is_new"] = False
+            if last_ts is not None and it.get("discovered_at"):
+                try:
+                    d = datetime.fromisoformat(str(it["discovered_at"]).replace("Z", "+00:00")).timestamp()
+                    it["is_new"] = d > last_ts
+                except ValueError:
+                    pass
+        return jsonify({"items": ranked, "now": now_iso, "ranking": ranking_cfg,
+                        "last_visit": last_visit})
 
     @app.route("/api/items/<int:item_id>/seen", methods=["POST"])
     def api_mark_seen(item_id: int):

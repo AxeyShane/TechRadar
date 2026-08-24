@@ -2890,3 +2890,15 @@ patents:
     - "additive manufacturing vision"
     - "robotic gripper"
     - "automation manufacturing"
+
+
+# ---- feed ranking (ranked dashboard) --------------------------------------
+# How the dashboard orders items for the front row. Applies to web + mobile
+# (the same responsive page). Signal over volume: a source can only fill a
+# slice of the page, and an older high score decays so a fresh medium score
+# can outrank it.
+ranking:
+  limit: 200                # keep the 200-item cap (now config-driven)
+  per_source_cap: 5        # no single feed may fill more than this many slots
+  half_life_days: 14       # a 14-day-old item is worth half its raw score
+
