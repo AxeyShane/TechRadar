@@ -326,3 +326,32 @@ def suggestions(limit: int = 12) -> list[dict]:
     scored.sort(key=lambda x: x[0], reverse=True)
     out = scored[:limit]
     return [dict(it) for _, it in out]
+
+
+def recommend_watch(limit: int = 12, min_score: int = 6):
+    """'Because you watched X' -- feed items selected by the taste vector
+    (embedding affinity to what you watched/shared, minus dismissals) instead
+    of the old keyword overlap. Deterministic, local. Returns the same row
+    shape as recent_feed() so the watch page renders it unchanged."""
+    from techradar import recommend as rec
+    from techradar import recommender
+    from techradar.database import get_connection
+
+    feed = [dict(x) for x in recent_feed(limit=120, use_cache=True)]
+    conn = get_connection()
+    try:
+        watched = recommender.gather_watched(conn, limit=30)
+        shared = recommender.gather_shared(conn, limit=50)
+        dismissed = recommender.gather_dismissed(conn, limit=50)
+    finally:
+        conn.close()
+
+    taste = rec.taste_vector(watched + shared, dismissed)
+    # rank the feed rows by similarity of their (title) text to the taste
+    scored = []
+    for it in feed:
+        sim = rec.cosine(rec.embed(it.get("title", "")), taste) if taste else 0.0
+        it["_sim"] = round(sim, 4)
+        scored.append(it)
+    scored.sort(key=lambda x: x.get("_sim", 0.0), reverse=True)
+    return [dict(it) for it in scored[:limit]]

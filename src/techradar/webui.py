@@ -51,6 +51,8 @@ WATCH_PAGE = """<!doctype html><html><head><meta charset="utf-8">
   <div class="grid" id="sugg"></div>
   <h2>Latest from your channels</h2>
   <div class="grid" id="feed"></div>
+  <h2>Downloads (ad-free)</h2>
+  <div class="grid" id="downloads"></div>
 <script>
 let currentId=null;
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -63,7 +65,26 @@ async function load(){
   document.getElementById('sugg').innerHTML=s.items.map(rowHtml).join('')||'<div class="m">Watch a video first \u2014 suggestions appear after your history grows.</div>';
   const f=await (await fetch('/api/watch/feed')).json();
   document.getElementById('feed').innerHTML=f.items.map(rowHtml).join('');
+  await loadDownloads();
   bind();
+}
+async function loadDownloads(){
+  const el=document.getElementById('downloads');
+  try{
+    const r=await (await fetch('/api/download/list')).json();
+    const files=(r.files||[]);
+    el.innerHTML = files.length ? files.map(f=>
+      '<div class="vid dl"><span class="t">'+esc(f.name)+'</span>'+
+      '<span class="m">'+fmtSize(f.size)+'</span>'+
+      '<button class="dl-open" onclick="playSaved(''+esc(f.name)+'')">Watch</button>'+
+      '<a class="dl-link" href="/api/download/media?name='+encodeURIComponent(f.name)+'" download>'+
+      '<button class="ghost dl">Save</button></a></div>').join('')
+      : '<div class="m">Nothing downloaded yet \u2014 use the MP4/MP3 buttons on feed items.</div>';
+  }catch(e){ el.innerHTML='<div class="m">Downloads unavailable.</div>'; }
+}
+function fmtSize(n){ if(!n) return ''; const k=n/1024; return k>1024*1024?(k/1024/1024).toFixed(1)+' GB':(k/1024).toFixed(1)+' MB'; }
+function playSaved(name){
+  window.open('/api/download/media?name='+encodeURIComponent(name), '_blank');
 }
 async function playFrom(d){
   currentId=d.vid; document.getElementById('err').innerHTML='';
@@ -678,7 +699,7 @@ self.addEventListener('fetch', (e) => {
     def api_watch_suggestions():
         from techradar import watch as wm
         try:
-            return jsonify({"items": wm.suggestions(limit=12)})
+            return jsonify({"items": wm.recommend_watch(limit=12)})
         except Exception as e:
             log.warning("watch suggestions failed: %s", e)
             return jsonify({"items": [], "error": str(e)})
