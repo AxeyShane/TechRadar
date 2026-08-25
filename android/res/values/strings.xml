@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">TechRadar</string>
+    <string name="server_hint">http://192.168.1.50:8766</string>
+</resources>
