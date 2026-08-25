@@ -197,6 +197,11 @@ PAGE = """<!doctype html><html><head><meta charset="utf-8">
   .feed-group + .feed-group { margin-top: 1rem; }
   .group-label { color: var(--text-muted); font-size: var(--text-sm); font-weight: 600;
     margin: 0 0 0.4rem; }
+  .row-actions { display: flex; gap: 0.4rem; align-items: center; margin-top: 0.5rem; }
+  .ghost.dl { background: transparent; color: var(--text-muted); border: 1px solid var(--border);
+    border-radius: 10px; padding: 0.2rem 0.6rem; font-size: 0.75rem; cursor: pointer; }
+  .ghost.dl:hover { border-color: var(--text-muted); }
+  .dl-status { min-height: 1rem; color: var(--text-muted); font-size: 0.8rem; margin: 0.4rem 0; }
   details.seen-section summary { cursor: pointer; color: var(--text-muted); font-size: var(--text-sm);
     font-weight: 600; padding: 0.4rem 0; }
   .share-box { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1rem;
@@ -245,6 +250,7 @@ PAGE = """<!doctype html><html><head><meta charset="utf-8">
       <div id="sharedList"></div>
     </details>
   </div>
+  <div id="dlStatus" class="dl-status"></div>
   <div id="items"></div>
 
 <script>
@@ -307,9 +313,23 @@ function itemHtml(it) {
       </div>
       <div class="meta">${it.source}${it.published_at ? ' · ' + it.published_at : ''}</div>
       <div class="reason">${it.reason || ''}</div>
-      ${!it.seen ? `<button class="dismiss" onclick="markSeen(${it.id})">Dismiss</button>` : ''}
+      <div class="row-actions">
+        ${it.url && /youtube\.com|youtu\.be/.test(it.url) && !it.seen
+          ? `<button class="ghost dl" onclick="startDl('${esc(it.url)}','mp4')">MP4</button>
+             <button class="ghost dl" onclick="startDl('${esc(it.url)}','mp3')">MP3</button>` : ''}
+        ${!it.seen ? `<button class="dismiss" onclick="markSeen(${it.id})">Dismiss</button>` : ''}
+      </div>
     </div>
   `;
+}
+async function startDl(url, fmt) {
+  const r = await fetch('/api/download', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({url, format: fmt})});
+  const j = await r.json();
+  const msg = document.getElementById('dlStatus');
+  if (!msg) return;
+  msg.textContent = j.ok ? `Downloading (${fmt})... see Downloads` : (j.reason||'failed');
+}
 }
 
 async function load() {
@@ -448,6 +468,33 @@ def create_app() -> Flask:
         stats = database.get_stats(conn)
         conn.close()
         return jsonify(stats)
+    @app.route("/api/download", methods=["POST"])
+    def api_download():
+        from techradar import downloader
+        payload = request.get_json(silent=True) or {}
+        url = str(payload.get("url", "")).strip()
+        fmt = str(payload.get("format", "mp4")).strip().lower() or "mp4"
+        if not url.startswith(("http://", "https://")):
+            return jsonify({"ok": False, "reason": "bad url"}), 400
+        height = int(payload.get("height", 720))
+        state = downloader.download(url, fmt=fmt, height=height)
+        return jsonify({"ok": True, "status": state["status"], "id": None})
+
+    @app.route("/api/download/list")
+    def api_download_list():
+        from techradar import downloader
+        return jsonify({"files": downloader.list_files()})
+
+    @app.route("/api/download/media")
+    def api_download_media():
+        from techradar import downloader
+        from flask import send_file as _send_file
+        name = request.args.get("name", "")
+        path = downloader.file_path(name)
+        if not path:
+            return jsonify({"ok": False, "reason": "not found"}), 404
+        return _send_file(path, as_attachment=True, download_name=os.path.basename(path))
+    
 
     @app.route("/api/fetch", methods=["POST"])
     def api_fetch():

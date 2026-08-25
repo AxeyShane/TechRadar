@@ -2902,3 +2902,13 @@ ranking:
   per_source_cap: 5        # no single feed may fill more than this many slots
   half_life_days: 14       # a 14-day-old item is worth half its raw score
 
+
+# ---- download (TubeMate-style save/convert) --------------------------------
+# Save feed media as MP4 (merged video+audio) or MP3 (audio-only). yt-dlp
+# extracts; the server stores files under ~/.techradar/downloads. Bound the
+# size so a mis-tap can't pull a huge file. Same YouTube-cookie handling as
+# the /watch page (WATCH_COOKIES_FILE / WATCH_COOKIES_BROWSER).
+download:
+  enabled: true
+  default_format: mp4      # mp4 | mp3
+  height: 720              # video quality cap for merged MP4

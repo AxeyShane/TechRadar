@@ -8,9 +8,14 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
+import android.webkit.DownloadListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.app.DownloadManager;
+import android.content.Context;
+import android.net.Uri;
+import android.content.Intent;
 
 public class MainActivity extends Activity {
     private WebView web;
@@ -40,6 +45,19 @@ public class MainActivity extends Activity {
         st.setMediaPlaybackRequiresUserGesture(false);
         web.setWebViewClient(new WebViewClient());
         web.setWebChromeClient(new WebChromeClient());
+        web.setDownloadListener(new DownloadListener() {
+            @Override public void onDownloadStart(String url, String userAgent,
+                    String contentDisposition, String mimetype, long contentLength) {
+                try {
+                    String name = android.webkit.URLUtil.guessFileName(url, contentDisposition, mimetype);
+                    DownloadManager.Request req = new DownloadManager.Request(Uri.parse(url));
+                    req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                    req.setTitle(name);
+                    req.setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, name);
+                    ((DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE)).enqueue(req);
+                } catch (Exception e) { /* best-effort */ }
+            }
+        });
 
         String saved = prefs.getString(KEY_PREF, "");
         serverUrl.setText(saved);
