@@ -251,6 +251,7 @@ PAGE = """<!doctype html><html><head><meta charset="utf-8">
     </details>
   </div>
   <div id="dlStatus" class="dl-status"></div>
+  <div id="rec"></div>
   <div id="items"></div>
 
 <script>
@@ -342,6 +343,14 @@ async function load() {
   const el = document.getElementById('items');
   const group = (label, list) => '<section class="feed-group"><h3 class="group-label">' + label +
     '</h3>' + list.map(itemHtml).join('') + '</section>';
+  // "Recommended for your taste" - affinity-ranked, above the plain feed.
+  let recEl = document.getElementById('rec');
+  try {
+    const rec = await (await fetch('/api/recommend')).json();
+    if (recEl) recEl.innerHTML = (rec.items && rec.items.length) ?
+      '<section class="feed-group rec"><h3 class="group-label">Recommended for your taste</h3>' +
+      rec.items.map(itemHtml).join('') + '</section>' : '';
+  } catch(e) { /* keep feed working if rec fails */ }
   el.innerHTML =
     (newItems.length ? group('New since you last looked', newItems) : '') +
     (oldItems.length ? group('Earlier', oldItems) : '') +
@@ -623,6 +632,47 @@ self.addEventListener('fetch', (e) => {
         except Exception as e:
             log.warning("watch feed failed: %s", e)
             return jsonify({"items": [], "error": str(e)})
+
+    @app.route("/api/recommend")
+    def api_recommend():
+        """'Recommended for your taste' -- affinity-ranked unseen scored items.
+
+        builds a taste vector from watched/shared/approved (positive) and
+        dismissals (negative), then ranks the feed by cosine similarity,
+        lightly blended with the raw score. Deterministic + local-first (no
+        extra LLM call). Web and the APK render it the same way."""
+        from techradar import recommend, recommender
+        from techradar.config import load_interests, load_sources
+
+        limits = {k: v for k, v in
+                  (load_sources().get("recommend") or {}).items()}
+        min_score = int(request.args.get("min_score",
+                                         load_interests().get("min_score", 6)))
+        cap = int(request.args.get("limit", limits.get("limit", 25)))
+        score_weight = float(limits.get("score_weight", 0.2))
+
+        conn = database.get_connection()
+        try:
+            watched = recommender.gather_watched(conn, limit=30)
+            shared = recommender.gather_shared(conn, limit=50)
+            dismissed = recommender.gather_dismissed(conn, limit=50)
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT rowid AS id, * FROM items WHERE seen = 0 "
+                "ORDER BY discovered_at DESC LIMIT 4000",
+            ).fetchall()
+        finally:
+            conn.close()
+
+        positive = watched + shared
+        negative = dismissed
+        taste = recommend.taste_vector(positive, negative)
+        items = [dict(r) for r in rows]
+        ranked = recommend.rank_feed_by_affinity(items, taste,
+                                                   min_score=min_score,
+                                                   cap=cap,
+                                                   score_weight=score_weight)
+        return jsonify({"items": ranked})
 
     @app.route("/api/watch/suggestions")
     def api_watch_suggestions():

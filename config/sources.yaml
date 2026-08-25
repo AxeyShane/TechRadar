@@ -2912,3 +2912,13 @@ download:
   enabled: true
   default_format: mp4      # mp4 | mp3
   height: 720              # video quality cap for merged MP4
+
+
+# ---- recommend (watch->learn->recommend, "like YouTube") --------------------
+# Builds a taste vector from what you watch (strongest), share/approve, minus
+# what you dismiss, and ranks unseen items by cosine similarity to it --
+# local, deterministic, zero extra LLM call. Renders above the ranked feed
+# on web + mobile (APK). score_weight blends raw score in (0=pure affinity).
+recommend:
+  limit: 25
+  score_weight: 0.2
