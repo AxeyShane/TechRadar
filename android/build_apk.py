@@ -21,7 +21,7 @@ classes=[]
 for dp,dn,fn in os.walk(b+"/classes"):
     for f in fn:
         if f.endswith(".class"): classes.append(os.path.join(dp,f))
-r=run([jbr+"/java.exe","-cp",bt+"/lib/d8.jar","com.android.tools.r8.D8","--min-api","26","--output",b]+classes); assert r.returncode==0,r.stderr
+r=run([jbr+"/java.exe","-cp",bt+"/lib/d8.jar","com.android.tools.r8.D8","--min-api","21","--output",b]+classes); assert r.returncode==0,r.stderr
 shutil.copy(b+"/app.unsigned.apk", b+"/app.dex.apk")
 zf=zipfile.ZipFile(b+"/app.dex.apk","a"); zf.write(b+"/classes.dex","classes.dex"); zf.close()
 r=run([bt+"/zipalign.exe","-f","4",b+"/app.dex.apk",b+"/app.aligned.apk"]); assert r.returncode==0,r.stdout
