@@ -9,7 +9,7 @@ The agent reads and watches — you skim the front page.
 ![Flask](https://img.shields.io/badge/dashboard-Flask-000000?logo=flask&logoColor=white)
 ![SQLite](https://img.shields.io/badge/storage-SQLite-003B57?logo=sqlite&logoColor=white)
 ![Version](https://img.shields.io/badge/version-0.1.0-informational)
-![License](https://img.shields.io/badge/license-proprietary-lightgrey)
+[![License](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 
 [Quick start](#-quick-start) •
 [Usage](#%EF%B8%8F-usage) •
@@ -153,8 +153,7 @@ dashboard share box, the Android **Share → TechRadar** target, and
 same untruncated captions → map-reduce summary the share flow uses, falling
 back to local ASR when captions are blocked. Local ASR is gated by the
 `transcription:` block in `config/sources.yaml` (per-run cap plus a cheap
-title-only prescore, so Whisper only runs on videos worth the cost). See
-`ACTION_PLAN.md` Phase 1 for the audit.
+title-only prescore, so Whisper only runs on videos worth the cost).
 
 ### 🎙️ Local transcription — `techradar transcribe`
 
@@ -195,8 +194,7 @@ Real thumbnails (YouTube frame, or a colored initial tile for
 articles/papers/patents), a **"Today's top pick"** hero card, category-color
 dots (video / paper / patent / discussion / code / article), and
 `j` / `k` / `enter` / `x` keyboard navigation. Still no algorithm beyond your
-own interest profile and your own watch/share/dismiss history — see
-`DESIGN.md`'s pivot note.
+own interest profile and your own watch/share/dismiss history.
 
 ### 🧠 It learns from you
 
@@ -300,7 +298,6 @@ doesn't run TechRadar itself.
 python android/build_apk.py
 ```
 
-Full build and signing notes: [ANDROID_APK.md](ANDROID_APK.md).
 
 ---
 
@@ -314,17 +311,9 @@ Full build and signing notes: [ANDROID_APK.md](ANDROID_APK.md).
 - **Google Patents** rate-limits aggressively; it's an optional, low-frequency
   cross-check (`patents.google_patents: true`), not the primary patent source.
 
-### Further reading
-
-| File | Contents |
-|---|---|
-| [`PRODUCT.md`](PRODUCT.md) | What TechRadar is for |
-| [`DESIGN.md`](DESIGN.md) | Design decisions and the front-row pivot |
-| [`ACTION_PLAN.md`](ACTION_PLAN.md) | Audit and phased fixes |
-| [`ANDROID_APK.md`](ANDROID_APK.md) | Android build/signing |
 
 ---
 
 <div align="center">
-<sub>Built by <a href="https://github.com/AxeyShane">@AxeyShane</a> · © 2026 Akshay Kharvi. All rights reserved.</sub>
+<sub>Built by <a href="https://github.com/AxeyShane">@AxeyShane</a> · MIT License · © 2026 Akshay Kharvi</sub>
 </div>
